@@ -1,0 +1,315 @@
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>ESP Web Server</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+        integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script>
+    <style>
+        html {
+            font-family: Arial;
+            display: inline-block;
+            text-align: center;
+        }
+
+        p {
+            font-size: 1.2rem;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .topnav {
+            overflow: hidden;
+            background-color: #003366;
+            color: #FFD43B;
+            font-size: 1rem;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .card {
+            background-color: white;
+            box-shadow: 2px 2px 12px 1px rgba(140, 140, 140, .5);
+        }
+
+        .card-title {
+            color: #003366;
+            font-weight: bold;
+        }
+
+        .cards {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        .reading {
+            font-size: 1.2rem;
+        }
+
+        .cube-content {
+            width: 100%;
+            background-color: white;
+            height: 300px;
+            margin: auto;
+            padding-top: 2%;
+        }
+
+        #reset {
+            border: none;
+            color: #FEFCFB;
+            background-color: #003366;
+            padding: 10px;
+            text-align: center;
+            display: inline-block;
+            font-size: 14px;
+            width: 150px;
+            border-radius: 4px;
+        }
+
+        #resetX,
+        #resetY,
+        #resetZ {
+            border: none;
+            color: #FEFCFB;
+            background-color: #003366;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            text-align: center;
+            display: inline-block;
+            font-size: 14px;
+            width: 20px;
+            border-radius: 4px;
+        }
+
+        /* Existing styles */
+        .sensor-circle {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .sensor-point {
+            fill: #1b78e2;
+            transition: all 0.3s ease;
+        }
+
+        .sensor-value {
+            font-size: 10px;
+            text-anchor: middle;
+        }
+
+        .sensor-label {
+            font-size: 8px;
+            fill: white;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+    </style>
+
+
+</head>
+
+<body>
+    <div class="topnav">
+        <h1><i class="far fa-compass"></i> MPU6050 <i class="far fa-compass"></i></h1>
+    </div>
+    <div class="content">
+        <div class="cards">
+            <div class="card">
+                <p class="card-title">GYROSCOPE</p>
+                <p><span class="reading">X: <span id="gyroX"></span> rad</span></p>
+                <p><span class="reading">Y: <span id="gyroY"></span> rad</span></p>
+                <p><span class="reading">Z: <span id="gyroZ"></span> rad</span></p>
+            </div>
+            <div class="card">
+                <p class="card-title">ACCELEROMETER</p>
+                <p><span class="reading">X: <span id="accX"></span> ms<sup>2</sup></span></p>
+                <p><span class="reading">Y: <span id="accY"></span> ms<sup>2</sup></span></p>
+                <p><span class="reading">Z: <span id="accZ"></span> ms<sup>2</sup></span></p>
+            </div>
+            <div class="card">
+                <p class="card-title">TEMPERATURE</p>
+                <p><span class="reading"><span id="temp"></span> &deg;C</span></p>
+                <p class="card-title">3D ANIMATION</p>
+                <button id="reset" onclick="resetPosition(this)">RESET POSITION</button>
+                <button id="resetX" onclick="resetPosition(this)">X</button>
+                <button id="resetY" onclick="resetPosition(this)">Y</button>
+                <button id="resetZ" onclick="resetPosition(this)">Z</button>
+            </div>
+
+            <div class="card">
+                <h4><i class="fas fa-circle-notch"></i> SENSOR VISUALIZATION</h4>
+                <div class="sensor-circle">
+                    <svg viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="#ccc" stroke-width="2" />
+                        <circle cx="100" cy="10" r="10" class="sensor-point" id="sensor1" />
+                        <circle cx="173" cy="50" r="10" class="sensor-point" id="sensor2" />
+                        <circle cx="173" cy="150" r="10" class="sensor-point" id="sensor3" />
+                        <circle cx="100" cy="190" r="10" class="sensor-point" id="sensor4" />
+                        <circle cx="27" cy="150" r="10" class="sensor-point" id="sensor5" />
+                        <circle cx="27" cy="50" r="10" class="sensor-point" id="sensor6" />
+
+                        <text x="100" y="10" class="sensor-label">S1</text>
+                        <text x="173" y="50" class="sensor-label">S2</text>
+                        <text x="173" y="150" class="sensor-label">S3</text>
+                        <text x="100" y="190" class="sensor-label">S4</text>
+                        <text x="27" y="150" class="sensor-label">S5</text>
+                        <text x="27" y="50" class="sensor-label">S6</text>
+                        <text x="100" y="30" class="sensor-value" id="one"></text>
+                        <text x="153" y="50" class="sensor-value" id="two"></text>
+                        <text x="153" y="165" class="sensor-value" id="three"></text>
+                        <text x="100" y="170" class="sensor-value" id="four"></text>
+                        <text x="47" y="165" class="sensor-value" id="five"></text>
+                        <text x="47" y="50" class="sensor-value" id="six"></text>
+                    </svg>
+                </div>
+            </div>
+
+
+        </div>
+        <div class="cube-content">
+            <div id="3Dcube"></div>
+        </div>
+    </div>
+    <script>
+        let scene, camera, rendered, cube;
+
+        function parentWidth(elem) {
+            return elem.parentElement.clientWidth;
+        }
+
+        function parentHeight(elem) {
+            return elem.parentElement.clientHeight;
+        }
+
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xffffff);
+
+            camera = new THREE.PerspectiveCamera(75, parentWidth(document.getElementById("3Dcube")) / parentHeight(document.getElementById("3Dcube")), 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(parentWidth(document.getElementById("3Dcube")), parentHeight(document.getElementById("3Dcube")));
+
+            document.getElementById('3Dcube').appendChild(renderer.domElement);
+
+            // Create a geometry
+            const geometry = new THREE.BoxGeometry(5, 1, 4);
+
+            // Materials of each face
+            var cubeMaterials = [
+                new THREE.MeshBasicMaterial({ color: 0x03045e }),
+                new THREE.MeshBasicMaterial({ color: 0x023e8a }),
+                new THREE.MeshBasicMaterial({ color: 0x0077b6 }),
+                new THREE.MeshBasicMaterial({ color: 0x03045e }),
+                new THREE.MeshBasicMaterial({ color: 0x023e8a }),
+                new THREE.MeshBasicMaterial({ color: 0x0077b6 }),
+            ];
+
+            const material = new THREE.MeshFaceMaterial(cubeMaterials);
+
+            cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+            camera.position.z = 5;
+            renderer.render(scene, camera);
+        }
+
+        // Resize the 3D object when the browser window changes size
+        function onWindowResize() {
+            camera.aspect = parentWidth(document.getElementById("3Dcube")) / parentHeight(document.getElementById("3Dcube"));
+            //camera.aspect = window.innerWidth /  window.innerHeight;
+            camera.updateProjectionMatrix();
+            //renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(parentWidth(document.getElementById("3Dcube")), parentHeight(document.getElementById("3Dcube")));
+
+        }
+
+        window.addEventListener('resize', onWindowResize, false);
+
+        // Create the 3D representation
+        init3D();
+
+        // Create events for the sensor readings
+        if (!!window.EventSource) {
+            var source = new EventSource('/events');
+
+            source.addEventListener('open', function (e) {
+                console.log("Events Connected");
+            }, false);
+
+            source.addEventListener('error', function (e) {
+                if (e.target.readyState != EventSource.OPEN) {
+                    console.log("Events Disconnected");
+                }
+            }, false);
+
+            source.addEventListener('gyro_readings', function (e) {
+                //console.log("gyro_readings", e.data);
+                var obj = JSON.parse(e.data);
+                document.getElementById("gyroX").innerHTML = obj.gyroX;
+                document.getElementById("gyroY").innerHTML = obj.gyroY;
+                document.getElementById("gyroZ").innerHTML = obj.gyroZ;
+
+                // Change cube rotation after receiving the readinds
+                cube.rotation.x = obj.gyroY;
+                cube.rotation.z = obj.gyroX;
+                cube.rotation.y = obj.gyroZ;
+                renderer.render(scene, camera);
+            }, false);
+
+            source.addEventListener('temperature_reading', function (e) {
+                console.log("temperature_reading", e.data);
+                document.getElementById("temp").innerHTML = e.data;
+            }, false);
+
+            source.addEventListener('accelerometer_readings', function (e) {
+                // Log the raw data from the event
+                console.log("Raw event data:", e.data);
+
+                try {
+                    var obj = JSON.parse(e.data);
+                    console.log("Parsed object:", obj); // Log the parsed JSON object to verify its structure
+
+                    // Update accelerometer readings
+                    document.getElementById("accX").innerHTML = obj.accX;
+                    document.getElementById("accY").innerHTML = obj.accY;
+                    document.getElementById("accZ").innerHTML = obj.accZ;
+
+                    // Update sensor values in circular visualization
+                    document.getElementById("one").textContent = '11.0';
+                    document.getElementById("two").textContent = obj.two;
+                    document.getElementById("three").textContent = obj.three;
+                    document.getElementById("four").textContent = obj.four;
+                    document.getElementById("five").textContent = obj.five;
+                    document.getElementById("six").textContent = obj.six;
+                } catch (error) {
+                    console.error("Error parsing JSON data:", error);
+                }
+            }, false);
+        }
+
+        function resetPosition(element) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/" + element.id, true);
+            console.log(element.id);
+            xhr.send();
+        }
+
+
+    </script>
+</body>
+
+</html>
+)rawliteral";
